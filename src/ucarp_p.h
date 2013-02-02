@@ -1,7 +1,7 @@
 #ifndef __CARP_P_H__
 #define __CARP_P_H__ 1
 
-static const char *GETOPT_OPTIONS = "i:s:v:p:Pa:hb:k:x:nu:d:Dr:zf:BoSM";
+static const char *GETOPT_OPTIONS = "i:s:v:p:Pa:hb:k:x:nu:d:Dr:zf:BoSMI";
 
 static struct option long_options[] = {
     { "interface", 1, NULL, 'i' },
@@ -26,6 +26,7 @@ static struct option long_options[] = {
     { "nomcast", 0, NULL, 'M' },
     { "passfile", 1, NULL, 'o' },
     { "xparam", 1, NULL, 'x' },
+    { "interface-mac", 0, NULL, 'I' },
     { NULL, 0, NULL, 0 }
 };
 

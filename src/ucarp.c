@@ -45,6 +45,7 @@ static void usage(void)
         "--nomcast (-M): use broadcast (instead of multicast) advertisements\n"
         "--facility=<facility> (-f): set syslog facility (default=daemon)\n"
         "--xparam=<value> (-x): extra parameter to send to up/down scripts\n"       
+        "--interface-mac (-I): use the interface's MAC address as src\n"
         "\n"
         "Sample usage:\n"
         "\n"
@@ -250,6 +251,10 @@ int main(int argc, char *argv[])
         }
         case 'M': {
             no_mcast = 1;
+            break;
+        }
+        case 'I': {
+            interface_mac = 1;
             break;
         }
         default: {

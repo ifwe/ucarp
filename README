@@ -154,6 +154,13 @@ set up to handle it. tcpdump on each host can be handy for diagnosis:
 
 tcpdump -n 'net 224.0.0.0/4'
 
+Note: when using multiple multicast IPs on the same LAN/VLAN, it is highly
+recommended to also use --interface-mac in order to avoid confusing the MAC
+address tables on switches. If two masters have the same VHID, the default
+CARP MAC address will be the same, resulting in the same MAC appearing on
+multiple switch ports. The --interface-mac option tells ucarp to use the
+interface's real MAC address as the source for advertisements.
+
 
 ------------------------ MASTER ELECTION PROCESS ------------------------
 

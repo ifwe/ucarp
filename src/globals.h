@@ -32,5 +32,6 @@ GLOBAL0(signed char no_mcast);
 GLOBAL(int syslog_facility, DEFAULT_FACILITY);
 GLOBAL0(char *vaddr_arg);
 GLOBAL0(char *xparam);
+GLOBAL0(signed char interface_mac);
 GLOBAL0(sig_atomic_t received_signal);
 #endif
