@@ -823,8 +823,10 @@ int docarp(void)
 
         if (sc.sc_ad_tmo.tv_sec == 0) {
             unsigned int tmpskew = advskew * 1000 / 256;
+            logfile(LOG_DEBUG, "polltime a");
             poll_sleep_time = sc.sc_advbase * 1000 + tmpskew;
         } else {
+            logfile(LOG_DEBUG, "polltime b");
             if (gettimeofday(&now, NULL) != 0) {
                 logfile(LOG_WARNING, _("gettimeofday() failed: %s"),
                         strerror(errno));
@@ -834,7 +836,9 @@ int docarp(void)
             poll_sleep_time = (time_until_advert.tv_sec * 1000) +
                 (time_until_advert.tv_usec / 1000);
         }
+        logfile(LOG_DEBUG, _("entering poll sleep %d"), poll_sleep_time);
         nfds = poll(pfds, (nfds_t) 1, MAX(1, poll_sleep_time));
+        logfile(LOG_DEBUG, "exited poll sleep");
         if (nfds == -1) {
             if (errno == EINTR) {
                continue;
