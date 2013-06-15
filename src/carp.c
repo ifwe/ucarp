@@ -676,7 +676,7 @@ int docarp(void)
     int nfds;
     int iface_running = 1;
     int poll_sleep_time;
-    struct timeval time_until_advert;
+    struct timeval sleep_time;
 
     sc.sc_vhid = vhid;
     sc.sc_advbase = advbase;
@@ -769,6 +769,7 @@ int docarp(void)
     strncpy(iface.ifr_name, interface, sizeof iface.ifr_name);
 #endif    
     for (;;) {
+        struct timeval pre_poll;
 #ifdef SIOCGIFFLAGS
         if (ioctl(fd, SIOCGIFFLAGS, &iface) != 0) {
             break;
@@ -824,24 +825,28 @@ int docarp(void)
             }
         }
 
-        if (sc.sc_ad_tmo.tv_sec == 0) {
-            unsigned int tmpskew = advskew * 1000 / 256;
-            logfile(LOG_DEBUG, "polltime a");
-            poll_sleep_time = sc.sc_advbase * 1000 + tmpskew;
-        } else {
-            logfile(LOG_DEBUG, "polltime b");
-            if (gettimeofday(&now, NULL) != 0) {
-                logfile(LOG_WARNING, _("gettimeofday() failed: %s"),
-                        strerror(errno));
-                continue;
-            }
-            timersub(&sc.sc_ad_tmo, &now, &time_until_advert);
-            poll_sleep_time = (time_until_advert.tv_sec * 1000) +
-                (time_until_advert.tv_usec / 1000);
+        if (gettimeofday(&pre_poll, NULL) != 0) {
+            logfile(LOG_WARNING, _("gettimeofday() failed: %s"),
+                    strerror(errno));
         }
-        logfile(LOG_DEBUG, _("entering poll sleep %d"), poll_sleep_time);
+        if (sc.sc_ad_tmo.tv_sec == 0) {
+            timersub(&sc.sc_md_tmo, &pre_poll, &sleep_time);
+        } else {
+            timersub(&sc.sc_ad_tmo, &pre_poll, &sleep_time);
+        }
+        poll_sleep_time = (sleep_time.tv_sec * 1000) +
+            (sleep_time.tv_usec / 1000);
+        logfile(LOG_DEBUG, _("entering poll for %d ms"),
+                poll_sleep_time);
+
         nfds = poll(pfds, (nfds_t) 1, MAX(1, poll_sleep_time));
-        logfile(LOG_DEBUG, "exited poll sleep");
+        if (gettimeofday(&now, NULL) != 0) {
+            logfile(LOG_WARNING, _("gettimeofday() failed: %s"),
+                    strerror(errno));
+        }
+        logfile(LOG_DEBUG, "exited poll after %d us",
+                1000000 * (now.tv_sec - pre_poll.tv_sec) +
+                now.tv_usec - pre_poll.tv_usec);
         if (nfds == -1) {
             if (errno == EINTR) {
                continue;
@@ -853,11 +858,6 @@ int docarp(void)
                     pfds[0].revents);
             break;
         }
-        if (gettimeofday(&now, NULL) != 0) {
-            logfile(LOG_WARNING, _("gettimeofday() failed: %s"),
-                    strerror(errno));
-            continue;
-        }        
         if (nfds == 1) {
             pcap_dispatch(dev_desc, 1, packethandler, NULL);
         }
@@ -873,9 +873,9 @@ int docarp(void)
            if (timercmp(&now, &sc.sc_ad_tmo, >)) {
                 carp_send_ad(&sc);
            } else {
-               timersub(&sc.sc_ad_tmo, &now, &time_until_advert);
-               int diff_ms = (time_until_advert.tv_sec * 1000) +
-                   (time_until_advert.tv_usec / 1000);
+               timersub(&sc.sc_ad_tmo, &now, &sleep_time);
+               int diff_ms = (sleep_time.tv_sec * 1000) +
+                   (sleep_time.tv_usec / 1000);
                if (abs(diff_ms) <= 1) {
                     carp_send_ad(&sc);
                }
